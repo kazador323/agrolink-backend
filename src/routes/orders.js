@@ -3,21 +3,6 @@ const Order = require('../models/Order')
 const Product = require('../models/Product')
 const auth = require('../middleware/auth')
 
-/**
- * Crear pedido (rol consumer)
- * Body esperado:
- * {
- *   producerId: "ObjectId",
- *   items: [{ productId, name, price, quantity }],
- *   total: Number
- * }
- * Lógica:
- * - Valida items
- * - Verifica que todos los productos existan, pertenezcan al mismo productor y tengan stock suficiente
- * - Descuenta stock
- * - Crea pedido con status 'pending'
- * - Devuelve el pedido populado (producerId + items.productId)
- */
 router.post('/', auth('consumer'), async (req, res) => {
   try {
     const consumerId = req.user.sub
@@ -70,10 +55,7 @@ router.post('/', auth('consumer'), async (req, res) => {
   }
 })
 
-/**
- * Marcar como entregado (rol producer)
- * Requiere que el pedido esté en status 'paid'
- */
+
 router.put('/:id/deliver', auth('producer'), async (req, res) => {
   try {
     const _id = req.params.id
@@ -88,7 +70,6 @@ router.put('/:id/deliver', auth('producer'), async (req, res) => {
     order.status = 'delivered'
     await order.save()
 
-    // devolver populado
     const populated = await Order.findById(order._id)
       .populate({ path: 'consumerId', select: 'name phone' })
       .populate({ path: 'producerId', select: 'name phone' })
@@ -102,12 +83,8 @@ router.put('/:id/deliver', auth('producer'), async (req, res) => {
   }
 })
 
-/**
- * Listar pedidos del usuario autenticado (rol-aware)
- * - consumer: ve sus compras -> populate producerId (name, phone)
- * - producer: ve pedidos recibidos -> populate consumerId (name, phone)
- * - admin: ve todos (populate ambos)
- */
+// Listar pedidos del usuario autenticado //
+
 router.get('/my', auth(), async (req, res) => {
   try {
     const userId = req.user.sub
@@ -123,7 +100,6 @@ router.get('/my', auth(), async (req, res) => {
       filter = { producerId: userId }
       populates.push({ path: 'consumerId', select: 'name phone' })
     } else {
-      // admin (o cualquier otro): trae todo
       filter = {}
       populates.push({ path: 'consumerId', select: 'name phone' })
       populates.push({ path: 'producerId', select: 'name phone' })
@@ -143,9 +119,6 @@ router.get('/my', auth(), async (req, res) => {
   }
 })
 
-/**
- * Obtener detalle de un pedido accesible por el usuario (consumer o producer involucrado, o admin)
- */
 router.get('/:id', auth(), async (req, res) => {
   try {
     const id = req.params.id
