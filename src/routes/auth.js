@@ -10,7 +10,6 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Rol inválido' })
     }
     if (!phone) return res.status(400).json({ error: 'Phone requerido' })
-// valida formato básico (solo dígitos y +)
     if (!/^[+0-9\s()-]{6,20}$/.test(phone)) {
         return res.status(400).json({ error: 'Phone inválido' })
     }
@@ -40,6 +39,29 @@ router.post('/login', async (req, res) => {
   )
 
   res.json({ token, role: user.role })
+})
+
+router.post('/recover', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: 'email y newPassword son requeridos' })
+    }
+
+    const user = await User.findOne({ email })
+    if (!user) {
+      return res.status(200).json({ ok: true })
+    }
+
+    const hash = await bcrypt.hash(newPassword, 10)
+    user.password = hash
+    await user.save()
+
+    res.json({ ok: true })
+  } catch (err) {
+    console.error('[POST /auth/recover] error', err)
+    res.status(400).json({ error: 'No se pudo actualizar la contraseña' })
+  }
 })
 
 module.exports = router

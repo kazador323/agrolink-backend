@@ -10,7 +10,7 @@ const orderSchema = new Schema({
     quantity: Number
   }],
   total: { type: Number, required: true },
-  status: { type: String, enum: ['pending', 'paid', 'delivered'], default: 'pending' }
+  status: { type: String, enum: ['pending', 'paid', 'in_transit', 'delivered', 'cancelled'], default: 'pending' }
 }, { timestamps: true })
 
 module.exports = model('Order', orderSchema)
