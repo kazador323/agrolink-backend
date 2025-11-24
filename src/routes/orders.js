@@ -3,6 +3,7 @@ const Order = require('../models/Order')
 const Product = require('../models/Product')
 const auth = require('../middleware/auth')
 const Location = require('../models/Location')
+const { sendEmail } = require('../services/notify')
 
 router.post('/', auth('consumer'), async (req, res) => {
   try {
@@ -48,8 +49,19 @@ router.post('/', auth('consumer'), async (req, res) => {
       status: 'pending'
     })
 
-    await order.populate({ path: 'producerId', select: 'name phone' })
+    await order.populate({ path: 'producerId', select: 'name phone email' })
     await order.populate({ path: 'items.productId', select: 'name price imageUrl category' })
+
+    //Notificar al productor por correo, si tiene email
+    /*if (order.producerId?.email) {
+      await sendEmail(
+        order.producerId.email,
+        'Nuevo pedido recibido en AgroLink',
+        `<p>Hola ${order.producerId.name},</p>
+        <p>Has recibido un nuevo pedido por <strong>$${order.total}</strong>.</p>
+        <p>Ingresa a AgroLink para ver los detalles.</p>`
+      )
+    }*/
 
     res.json(order)
   } catch (err) {
@@ -147,21 +159,15 @@ router.put('/:id/cancel', auth(), async (req, res) => {
     }
 
     if (order.status === 'pending') {
-      // OK: consumidor, productor o admin pueden cancelar
-      // (ya validamos isInvolved o admin más arriba)
     } else if (order.status === 'paid') {
-      // Pedido pagado: solo productor o admin pueden cancelar
       if (!isProducer && role !== 'admin') {
         return res.status(400).json({
           error: 'Solo el productor puede cancelar un pedido pagado (previa coordinación con el consumidor)'
         })
       }
     } else {
-      // Por si en el futuro aparecen otros estados
       return res.status(400).json({ error: 'No se puede cancelar este pedido en su estado actual' })
     }
-
-    // Devolver stock (para pending y paid)
     for (const it of order.items) {
       await Product.updateOne(
         { _id: it.productId },
