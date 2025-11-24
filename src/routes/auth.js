@@ -11,15 +11,24 @@ router.post('/register', async (req, res) => {
     }
     if (!phone) return res.status(400).json({ error: 'Phone requerido' })
     if (!/^[+0-9\s()-]{6,20}$/.test(phone)) {
-        return res.status(400).json({ error: 'Phone inválido' })
+      return res.status(400).json({ error: 'Phone inválido' })
     }
+
     const exists = await User.findOne({ email })
     if (exists) return res.status(400).json({ error: 'Correo ya registrado' })
 
     const hash = await bcrypt.hash(password, 10)
-    const user = await User.create({ name, email, password: hash, role })
-    res.json({ id: user._id, email: user.email, role: user.role, phone })
+
+    const user = await User.create({ name, email, password: hash, role, phone })
+
+    res.json({
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+    })
   } catch (err) {
+    console.error('[POST /auth/register] error', err)
     res.status(500).json({ error: 'Error en registro' })
   }
 })

@@ -13,7 +13,7 @@ const auth = require('../middleware/auth')
  */
 router.get('/', async (req, res) => {
   try {
-    const { region, commune, category } = req.query
+    const { region, comuna, category } = req.query
     const page  = Math.max(parseInt(req.query.page || '1', 10), 1)
     const limit = Math.min(Math.max(parseInt(req.query.limit || '9', 10), 1), 50)
     const skip  = (page - 1) * limit
@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
     ]
 
     if (region)  pipeline.push({ $match: { 'producerLocation.region': region } })
-    if (commune) pipeline.push({ $match: { 'producerLocation.commune': commune } })
+    if (comuna) pipeline.push({ $match: { 'producerLocation.commune': comuna } })
 
     // proyectamos lo que necesita el front (incluye datos públicos del productor)
     pipeline.push({

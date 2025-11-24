@@ -12,14 +12,14 @@ router.get('/my', auth(), async (req, res) => {
 // Crear o actualizar (upsert) mi ubicación
 router.put('/my', auth(), async (req, res) => {
   const userId = req.user.sub
-  const { address, commune, region, latitude, longitude } = req.body
+  const { address, comuna, region, latitude, longitude } = req.body
 
-  if (!address || !commune || !region) {
+  if (!address || !comuna || !region) {
     return res.status(400).json({ error: 'address, commune y region son obligatorios' })
   }
   const loc = await Location.findOneAndUpdate(
     { userId },
-    { $set: { address, commune, region, latitude, longitude } },
+    { $set: { address, comuna, region, latitude, longitude } },
     { new: true, upsert: true }
   )
   res.json(loc)
